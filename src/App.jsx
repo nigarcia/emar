@@ -3,7 +3,6 @@ import {
   Search, MessageCircle, Lock, X, ArrowRight, Check, Plus, Trash2, Edit2
 } from 'lucide-react';
 
-// Product images matching the user's initial image attachment
 const PRODUCTS_DATA = [
   {
     id: '1',
@@ -14,7 +13,7 @@ const PRODUCTS_DATA = [
     isNew: true,
     description: 'Chaqueta corta en acabado suave tipo ante de tono marrón moka con cremallera metálica, solapas estructuradas y puños elasticados. Combínala con pantalones de talle alto.',
     images: [
-      'https://i.ibb.co/L1VqGkF/product1-suede.jpg' // High quality suede jacket
+      'https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&q=80&w=1000'
     ],
     variants: [
       { size: 'S', color: 'Marrón Moka', stock: 4 },
@@ -31,7 +30,7 @@ const PRODUCTS_DATA = [
     isNew: true,
     description: 'Chaqueta corta confeccionada con tejido de cuadros clásicos en tonos neutros y arena. Posee cuello mao levantado, bolsillos de parche con solapa y corte limpio.',
     images: [
-      'https://i.ibb.co/5vYF0sX/product2-plaid.jpg'
+      'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=1000'
     ],
     variants: [
       { size: 'S', color: 'Beige / Arena', stock: 3 },
@@ -47,7 +46,7 @@ const PRODUCTS_DATA = [
     isNew: false,
     description: 'Top minimalista en tono café profundo con cuello halter envuelto y dramático escote en la espalda. Confeccionado en tejido de suave elasticidad que ajusta la figura.',
     images: [
-      'https://i.ibb.co/hfw8y64/product3-backless.jpg'
+      'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=1000'
     ],
     variants: [
       { size: 'XS', color: 'Café Moka', stock: 2 },
@@ -59,7 +58,7 @@ const PRODUCTS_DATA = [
 
 export default function App() {
   const [products, setProducts] = useState(() => {
-    const saved = localStorage.getItem('emar_products_v2');
+    const saved = localStorage.getItem('emar_products_v4');
     return saved ? JSON.parse(saved) : PRODUCTS_DATA;
   });
 
@@ -68,11 +67,9 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
-  const [selectedSize, setSelectedSize] = useState('');
-  const [selectedColor, setSelectedColor] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('emar_products_v2', JSON.stringify(products));
+    localStorage.setItem('emar_products_v4', JSON.stringify(products));
   }, [products]);
 
   const categories = ['Todos', 'Chaquetas', 'Blusas', 'Vestidos', 'Pantalones', 'Conjuntos', 'Accesorios'];
@@ -85,24 +82,20 @@ export default function App() {
 
   const handleOpenProduct = (product) => {
     setSelectedProduct(product);
-    if (product.variants.length > 0) {
-      setSelectedSize(product.variants[0].size);
-      setSelectedColor(product.variants[0].color);
-    }
   };
 
-  const sendWhatsAppMessage = (product, size, color) => {
-    const text = `Hola EMAR, me gustaría consultar la disponibilidad del producto "${product.name}".\nPrecio: $${product.price.toFixed(2)}\nTalla: ${size || 'S'}\nColor: ${color || 'Marrón'}`;
+  const sendWhatsAppMessage = (product) => {
+    const text = `Hola EMAR, me gustaría consultar la disponibilidad del producto "${product.name}".\nPrecio: $${product.price.toFixed(2)}`;
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1A1A1A] font-sans">
-      {/* Header */}
+      {/* Header Fijo con Fondo Marfil / Beige Cálido */}
       <header className="sticky top-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-[#E8E2D9]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <button onClick={() => setActiveTab('catalog')} className="flex items-center gap-3">
-            <span className="font-serif text-3xl tracking-[0.25em] text-[#3D2A21] font-bold">EMAR</span>
+            <span className="font-serif text-3xl tracking-[0.3em] text-[#3D2A21] font-bold">EMAR</span>
           </button>
 
           <nav className="hidden md:flex items-center space-x-10 text-xs uppercase tracking-[0.2em] font-medium">
@@ -126,32 +119,43 @@ export default function App() {
         </div>
       </header>
 
-      {/* Hero Section with dark overlay for readability */}
-      <section className="relative h-[82vh] min-h-[520px] flex items-center justify-center bg-[#1A1A1A] overflow-hidden">
+      {/* Hero Section idéntica al diseño editorial inicial */}
+      <section className="relative h-[85vh] min-h-[550px] flex items-center justify-center bg-[#1A1A1A] overflow-hidden">
+        {/* Fotografía de moda editorial de alta definición */}
         <img 
           src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=2000" 
-          alt="EMAR Editorial" 
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-65"
+          alt="EMAR Editorial Lookbook" 
+          className="absolute inset-0 w-full h-full object-cover object-center scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] via-[#1A1A1A]/40 to-transparent" />
+        
+        {/* Capa de sombreado graduado para contraste perfecto de texto */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] via-[#1A1A1A]/60 to-[#1A1A1A]/30" />
 
         <div className="relative text-center text-white px-4 max-w-4xl mx-auto space-y-6">
-          <span className="text-xs uppercase tracking-[0.35em] text-[#C5A059] font-semibold">NUEVA COLECCIÓN 2026</span>
-          <h1 className="font-serif text-5xl sm:text-7xl font-normal tracking-wide leading-tight drop-shadow-md">
+          <span className="inline-block text-[11px] uppercase tracking-[0.4em] text-[#C5A059] font-bold bg-[#1A1A1A]/60 backdrop-blur-sm px-4 py-1.5 rounded-full border border-[#C5A059]/30">
+            NUEVA COLECCIÓN 2026
+          </span>
+          
+          <h1 className="font-serif text-5xl sm:text-7xl font-normal tracking-wide leading-tight drop-shadow-lg text-[#FAF8F5]">
             Elegancia Sobria &amp; Contemporánea
           </h1>
-          <p className="text-sm sm:text-base font-light text-[#E8E2D9] max-w-xl mx-auto leading-relaxed">
-            Diseño independiente y curaduría de moda femenina de alta gama para mujeres modernas.
+          
+          <p className="text-sm sm:text-base font-light text-[#E8E2D9] max-w-xl mx-auto leading-relaxed drop-shadow">
+            Diseño independiente y curaduría de moda femenina de alta gama. Piezas exclusivas que combinan sofisticación y estilo atemporal.
           </p>
-          <div className="pt-4">
-            <a href="#catalogo" className="inline-flex items-center gap-3 bg-[#FAF8F5] text-[#3D2A21] px-8 py-3.5 rounded-full text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[#C5A059] hover:text-white transition-all shadow-md">
+          
+          <div className="pt-6">
+            <a 
+              href="#catalogo" 
+              className="inline-flex items-center gap-3 bg-[#FAF8F5] text-[#3D2A21] px-8 py-3.5 rounded-full text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[#C5A059] hover:text-white transition-all shadow-xl hover:scale-105"
+            >
               Explorar Catálogo <ArrowRight size={14} />
             </a>
           </div>
         </div>
       </section>
 
-      {/* Catalog */}
+      {/* Catálogo Principales */}
       <section id="catalogo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
@@ -171,7 +175,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Categories */}
+        {/* Categorías */}
         <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-10 border-b border-[#E8E2D9]">
           {categories.map(cat => (
             <button
@@ -184,7 +188,7 @@ export default function App() {
           ))}
         </div>
 
-        {/* Product Grid */}
+        {/* Rejilla de productos */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {filteredProducts.map(product => (
             <div 
@@ -217,7 +221,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Modal */}
+      {/* Modal Ficha Producto */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#FAF8F5] max-w-3xl w-full rounded-2xl overflow-hidden shadow-2xl border border-[#E8E2D9] max-h-[90vh] flex flex-col md:flex-row">
@@ -245,7 +249,7 @@ export default function App() {
 
               <div className="pt-6 border-t border-[#E8E2D9] mt-6">
                 <button
-                  onClick={() => sendWhatsAppMessage(selectedProduct, selectedSize, selectedColor)}
+                  onClick={() => sendWhatsAppMessage(selectedProduct)}
                   className="w-full bg-[#3D2A21] text-white py-3.5 rounded-full flex items-center justify-center gap-2 text-xs uppercase tracking-widest hover:bg-[#5C4033] transition-all shadow-md"
                 >
                   <MessageCircle size={16} className="text-[#C5A059]" />
