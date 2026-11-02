@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, MessageCircle, Lock, X, ArrowRight, Check, Plus, Trash2, Edit2, 
-  SlidersHorizontal, Package, RefreshCw, Eye, ShieldCheck, Phone, LogOut, Save, AlertCircle
+  Package, Phone, LogOut, Save, AlertCircle, Image as ImageIcon
 } from 'lucide-react';
 
 const INITIAL_PRODUCTS = [
@@ -14,7 +14,8 @@ const INITIAL_PRODUCTS = [
     isNew: true,
     description: 'Chaqueta corta en acabado suave tipo ante de tono marrón moka con cremallera metálica, solapas estructuradas y puños elasticados. Combínala con pantalones de talle alto.',
     images: [
-      'https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&q=80&w=1000'
+      'https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&q=80&w=1000',
+      'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&q=80&w=1000'
     ],
     variants: [
       { size: 'S', color: 'Marrón Moka', stock: 4 },
@@ -31,7 +32,8 @@ const INITIAL_PRODUCTS = [
     isNew: true,
     description: 'Chaqueta corta confeccionada con tejido de cuadros clásicos en tonos neutros y arena. Posee cuello mao levantado, bolsillos de parche con solapa y corte limpio.',
     images: [
-      'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=1000'
+      'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=1000',
+      'https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&q=80&w=1000'
     ],
     variants: [
       { size: 'S', color: 'Beige / Arena', stock: 3 },
@@ -47,7 +49,8 @@ const INITIAL_PRODUCTS = [
     isNew: false,
     description: 'Top minimalista en tono café profundo con cuello halter envuelto y dramático escote en la espalda. Confeccionado en tejido de suave elasticidad que ajusta la figura.',
     images: [
-      'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=1000'
+      'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=1000',
+      'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1000'
     ],
     variants: [
       { size: 'XS', color: 'Café Moka', stock: 2 },
@@ -59,7 +62,7 @@ const INITIAL_PRODUCTS = [
 
 export default function App() {
   const [products, setProducts] = useState(() => {
-    const saved = localStorage.getItem('emar_products_v5');
+    const saved = localStorage.getItem('emar_products_v6');
     return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
   });
 
@@ -67,7 +70,7 @@ export default function App() {
     return localStorage.getItem('emar_wa_phone') || '584140000000';
   });
 
-  const [activeTab, setActiveTab] = useState('catalog'); // 'catalog', 'about', 'admin'
+  const [activeTab, setActiveTab] = useState('catalog');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [loginError, setLoginError] = useState(false);
@@ -77,11 +80,12 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // Selected Variant state for Modal
+  // Modal Gallery & Variant State
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [modalSize, setModalSize] = useState('');
   const [modalColor, setModalColor] = useState('');
 
-  // Admin Form State (Editing or Creating Product)
+  // Admin Form State
   const [editingProductId, setEditingProductId] = useState(null);
   const [formProduct, setFormProduct] = useState({
     name: '',
@@ -90,12 +94,12 @@ export default function App() {
     featured: false,
     isNew: true,
     description: '',
-    images: [''],
+    images: ['https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&q=80&w=1000'],
     variants: [{ size: 'S', color: 'Marrón Moka', stock: 5 }]
   });
 
   useEffect(() => {
-    localStorage.setItem('emar_products_v5', JSON.stringify(products));
+    localStorage.setItem('emar_products_v6', JSON.stringify(products));
   }, [products]);
 
   useEffect(() => {
@@ -125,6 +129,7 @@ export default function App() {
 
   const handleOpenProduct = (product) => {
     setSelectedProduct(product);
+    setActiveImageIdx(0);
     if (product.variants && product.variants.length > 0) {
       setModalSize(product.variants[0].size);
       setModalColor(product.variants[0].color);
@@ -138,7 +143,6 @@ export default function App() {
   };
 
   const sendWhatsAppMessage = (product, size, color) => {
-    const stockAvail = getVariantStock(product, size, color);
     const text = `Hola EMAR Boutique, estoy interesada en comprar el producto "${product.name}".\nPrecio: $${product.price.toFixed(2)}\nTalla: ${size || 'N/A'}\nColor: ${color || 'N/A'}\n¿Podrían indicarme la disponibilidad y métodos de pago?`;
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -176,17 +180,23 @@ export default function App() {
     e.preventDefault();
     if (!formProduct.name || !formProduct.price) return;
 
+    // Filter empty image URLs
+    const cleanImages = formProduct.images.filter(img => img.trim() !== '');
+    const finalImages = cleanImages.length > 0 ? cleanImages : ['https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&q=80&w=1000'];
+
     if (editingProductId) {
       setProducts(products.map(p => p.id === editingProductId ? {
         ...formProduct,
         id: editingProductId,
-        price: parseFloat(formProduct.price)
+        price: parseFloat(formProduct.price),
+        images: finalImages
       } : p));
     } else {
       const newProd = {
         ...formProduct,
         id: Date.now().toString(),
-        price: parseFloat(formProduct.price)
+        price: parseFloat(formProduct.price),
+        images: finalImages
       };
       setProducts([newProd, ...products]);
     }
@@ -199,6 +209,28 @@ export default function App() {
     }
   };
 
+  // Admin Image Fields Management
+  const handleAddImageField = () => {
+    setFormProduct({
+      ...formProduct,
+      images: [...formProduct.images, '']
+    });
+  };
+
+  const handleRemoveImageField = (index) => {
+    setFormProduct({
+      ...formProduct,
+      images: formProduct.images.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleImageChange = (index, value) => {
+    const updated = [...formProduct.images];
+    updated[index] = value;
+    setFormProduct({ ...formProduct, images: updated });
+  };
+
+  // Admin Variant Fields Management
   const handleAddVariant = () => {
     setFormProduct({
       ...formProduct,
@@ -350,6 +382,11 @@ export default function App() {
                       {product.isNew && (
                         <span className="absolute top-4 left-4 bg-[#3D2A21] text-white text-[10px] uppercase tracking-widest px-3 py-1 rounded-full font-medium">Nuevo</span>
                       )}
+                      {product.images.length > 1 && (
+                        <span className="absolute bottom-4 right-4 bg-[#1A1A1A]/70 backdrop-blur-sm text-white text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full font-medium flex items-center gap-1">
+                          <ImageIcon size={10} /> {product.images.length} fotos
+                        </span>
+                      )}
                       {totalStock === 0 && (
                         <span className="absolute top-4 right-4 bg-red-900 text-white text-[10px] uppercase tracking-widest px-3 py-1 rounded-full font-medium">Agotado</span>
                       )}
@@ -382,30 +419,13 @@ export default function App() {
               EMAR nació para redefinir el guardarropa femenino contemporáneo. Diseñamos y curamos colecciones exclusivas pensadas para mujeres que aprecian la elegancia sobria, las texturas de alta calidad y los cortes impecables.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <img 
-              src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1000" 
-              alt="EMAR Boutique Atelier" 
-              className="rounded-2xl shadow-xl object-cover h-[450px] w-full"
-            />
-            <div className="space-y-6">
-              <h3 className="font-serif text-3xl text-[#3D2A21]">Compromiso con la Calidad</h3>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Cada prenda que forma parte de nuestra propuesta pasa por un estricto proceso de selección de materiales y acabado. Priorizamos siluetas versátiles en tonalidades tierra, arena y acentos oscuros.
-              </p>
-              <div className="pt-4 border-t border-[#E8E2D9]">
-                <p className="font-serif text-xl text-[#C5A059] italic">"Elegancia es cuando el interior es tan hermoso como el exterior."</p>
-              </div>
-            </div>
-          </div>
         </main>
       )}
 
-      {/* PÁGINA PANEL ADMINISTRATIVO DE INVENTARIO */}
+      {/* PÁGINA PANEL ADMINISTRATIVO */}
       {activeTab === 'admin' && (
         <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
           {!isAdminLoggedIn ? (
-            /* Login Form */
             <div className="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-lg border border-[#E8E2D9] my-12 space-y-6">
               <div className="text-center space-y-2">
                 <div className="w-12 h-12 bg-[#3D2A21] text-[#C5A059] rounded-full flex items-center justify-center mx-auto mb-2">
@@ -440,50 +460,22 @@ export default function App() {
               </form>
             </div>
           ) : (
-            /* Admin Panel Dashboard */
             <div className="space-y-10">
-              {/* Top Admin Bar */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-2xl border border-[#E8E2D9] shadow-sm gap-4">
                 <div>
                   <span className="text-[10px] uppercase tracking-widest text-[#C5A059] font-bold">EMAR INVENTORY CONTROL</span>
                   <h1 className="font-serif text-3xl text-[#3D2A21]">Gestión de Productos e Inventario</h1>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => setIsAdminLoggedIn(false)}
-                    className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-xs uppercase tracking-wider hover:bg-gray-200 transition-colors"
-                  >
-                    <LogOut size={14} /> Salir
-                  </button>
-                </div>
-              </div>
-
-              {/* Configuración del Teléfono de WhatsApp */}
-              <div className="bg-white p-6 rounded-2xl border border-[#E8E2D9] shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-green-50 text-green-700 rounded-xl">
-                    <Phone size={20} />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-[#3D2A21]">Número Oficial de WhatsApp</h4>
-                    <p className="text-xs text-gray-500">Este número recibirá todas las solicitudes automáticas de compra de los clientes.</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                  <input 
-                    type="text" 
-                    value={whatsappNumber}
-                    onChange={(e) => setWhatsappNumber(e.target.value)}
-                    className="px-4 py-2 bg-[#FAF8F5] border border-[#E8E2D9] rounded-xl text-xs tracking-wider w-full md:w-60 focus:outline-none focus:border-[#3D2A21]"
-                  />
-                  <span className="text-xs text-green-700 font-semibold bg-green-100 px-3 py-2 rounded-xl flex items-center gap-1">
-                    <Check size={12} /> Activo
-                  </span>
-                </div>
+                <button 
+                  onClick={() => setIsAdminLoggedIn(false)}
+                  className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-xs uppercase tracking-wider hover:bg-gray-200 transition-colors"
+                >
+                  <LogOut size={14} /> Salir
+                </button>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Formulario de Crear/Editar Producto */}
+                {/* Formulario */}
                 <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-[#E8E2D9] shadow-sm space-y-6 h-fit">
                   <div className="flex justify-between items-center border-b border-[#E8E2D9] pb-4">
                     <h3 className="font-serif text-2xl text-[#3D2A21]">
@@ -534,16 +526,36 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="text-[11px] font-semibold text-gray-700 uppercase tracking-wider block mb-1">URL de Imagen Principal:</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={formProduct.images[0] || ''}
-                        onChange={(e) => setFormProduct({ ...formProduct, images: [e.target.value] })}
-                        placeholder="https://images.unsplash.com/..."
-                        className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E2D9] rounded-xl text-xs focus:outline-none focus:border-[#3D2A21]"
-                      />
+                    {/* Galería Dinámica de Imágenes */}
+                    <div className="space-y-2 pt-2 border-t border-[#E8E2D9]">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[11px] font-semibold text-[#3D2A21] uppercase tracking-wider">Galería de Imágenes (URLs):</label>
+                        <button 
+                          type="button" 
+                          onClick={handleAddImageField}
+                          className="text-[10px] bg-[#3D2A21] text-white px-2 py-1 rounded flex items-center gap-1"
+                        >
+                          <Plus size={10} /> Añadir Foto
+                        </button>
+                      </div>
+
+                      {formProduct.images.map((imgUrl, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <input 
+                            type="text" 
+                            required={idx === 0}
+                            value={imgUrl}
+                            onChange={(e) => handleImageChange(idx, e.target.value)}
+                            placeholder={idx === 0 ? "Foto principal (URL)" : `Foto ${idx + 1} (URL)`}
+                            className="w-full px-3 py-1.5 bg-[#FAF8F5] border border-[#E8E2D9] rounded-xl text-xs focus:outline-none focus:border-[#3D2A21]"
+                          />
+                          {formProduct.images.length > 1 && (
+                            <button type="button" onClick={() => handleRemoveImageField(idx)} className="text-red-500 hover:text-red-700">
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
                     </div>
 
                     <div>
@@ -557,10 +569,10 @@ export default function App() {
                       />
                     </div>
 
-                    {/* Matriz de Variantes Talla x Color x Stock */}
+                    {/* Variantes */}
                     <div className="space-y-3 pt-2 border-t border-[#E8E2D9]">
                       <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-semibold text-[#3D2A21] uppercase tracking-wider">Control de Stock (Talla x Color):</label>
+                        <label className="text-[11px] font-semibold text-[#3D2A21] uppercase tracking-wider">Stock por Talla y Color:</label>
                         <button 
                           type="button" 
                           onClick={handleAddVariant}
@@ -613,11 +625,11 @@ export default function App() {
                   </form>
                 </div>
 
-                {/* Lista e Inventario Actual de Productos */}
+                {/* Inventario */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-[#E8E2D9] shadow-sm space-y-6">
                   <div className="flex justify-between items-center border-b border-[#E8E2D9] pb-4">
                     <h3 className="font-serif text-2xl text-[#3D2A21]">Inventario en Tiempo Real</h3>
-                    <span className="text-xs text-gray-500 uppercase tracking-widest">{products.length} Productos Registrados</span>
+                    <span className="text-xs text-gray-500 uppercase tracking-widest">{products.length} Productos</span>
                   </div>
 
                   <div className="overflow-x-auto">
@@ -627,7 +639,7 @@ export default function App() {
                           <th className="pb-3">Producto</th>
                           <th className="pb-3">Categoría</th>
                           <th className="pb-3">Precio</th>
-                          <th className="pb-3">Existencias Total</th>
+                          <th className="pb-3">Stock Total</th>
                           <th className="pb-3 text-right">Acciones</th>
                         </tr>
                       </thead>
@@ -640,7 +652,7 @@ export default function App() {
                                 <img src={p.images[0]} alt={p.name} className="w-10 h-12 object-cover rounded-md bg-gray-100" />
                                 <div>
                                   <p className="font-semibold text-sm text-[#1A1A1A]">{p.name}</p>
-                                  <p className="text-[10px] text-gray-400">{p.variants.length} variantes configuradas</p>
+                                  <p className="text-[10px] text-gray-400">{p.images.length} fotos • {p.variants.length} variantes</p>
                                 </div>
                               </td>
                               <td className="py-4 text-gray-600">{p.category}</td>
@@ -657,18 +669,10 @@ export default function App() {
                                 )}
                               </td>
                               <td className="py-4 text-right space-x-2">
-                                <button 
-                                  onClick={() => handleEditClick(p)} 
-                                  className="p-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-[#3D2A21] hover:text-white transition-colors"
-                                  title="Editar"
-                                >
+                                <button onClick={() => handleEditClick(p)} className="p-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-[#3D2A21] hover:text-white transition-colors">
                                   <Edit2 size={13} />
                                 </button>
-                                <button 
-                                  onClick={() => handleDeleteProduct(p.id)} 
-                                  className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
-                                  title="Eliminar"
-                                >
+                                <button onClick={() => handleDeleteProduct(p.id)} className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors">
                                   <Trash2 size={13} />
                                 </button>
                               </td>
@@ -685,18 +689,35 @@ export default function App() {
         </main>
       )}
 
-      {/* Modal Ficha Producto para Clientes */}
+      {/* Modal Ficha Producto con GALERÍA MULTIFOTO E INTERACTIVA */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#FAF8F5] max-w-3xl w-full rounded-2xl overflow-hidden shadow-2xl border border-[#E8E2D9] max-h-[90vh] flex flex-col md:flex-row">
-            <div className="md:w-1/2 bg-[#1A1A1A] flex items-center justify-center p-4">
+          <div className="bg-[#FAF8F5] max-w-4xl w-full rounded-2xl overflow-hidden shadow-2xl border border-[#E8E2D9] max-h-[90vh] flex flex-col md:flex-row">
+            {/* Galería Lateral / Principal */}
+            <div className="md:w-1/2 bg-[#1A1A1A] flex flex-col items-center justify-center p-4 space-y-4">
               <img 
-                src={selectedProduct.images[0]} 
+                src={selectedProduct.images[activeImageIdx] || selectedProduct.images[0]} 
                 alt={selectedProduct.name}
-                className="max-h-[420px] object-contain rounded-lg"
+                className="max-h-[360px] object-contain rounded-lg shadow-md transition-all duration-300"
               />
+              
+              {/* Selector de Miniaturas si hay 2 o más fotos */}
+              {selectedProduct.images.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pt-2 max-w-full">
+                  {selectedProduct.images.map((imgUrl, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveImageIdx(i)}
+                      className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${activeImageIdx === i ? 'border-[#C5A059] scale-105 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                    >
+                      <img src={imgUrl} alt={`Vista ${i + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="md:w-1/2 p-8 flex flex-col justify-between">
+
+            <div className="md:w-1/2 p-8 flex flex-col justify-between overflow-y-auto">
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
@@ -710,7 +731,7 @@ export default function App() {
                 <p className="text-2xl font-semibold text-[#5C4033]">${selectedProduct.price.toFixed(2)}</p>
                 <p className="text-xs text-gray-600 leading-relaxed">{selectedProduct.description}</p>
 
-                {/* Seleccion de Talla y Color */}
+                {/* Talla y Color */}
                 <div className="space-y-3 pt-2">
                   <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-700 block">Tallas Disponibles:</label>
                   <div className="flex gap-2">
